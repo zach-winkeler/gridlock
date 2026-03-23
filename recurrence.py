@@ -2,7 +2,6 @@ import itertools
 from copy import copy
 from functools import cache
 from itertools import combinations
-from math import floor
 
 
 # represents a polynomial of one variable called "k"
@@ -60,6 +59,17 @@ def initialize_from_set(elems):
     return Partition({e: i for i, e in enumerate(elems)},
                      {i: e for i, e in enumerate(elems)},
                      [i for i in range(len(elems))])
+
+
+def group_by_key(elems, key):
+    groups = {}
+    for e in elems:
+        k = key(e)
+        if k in groups:
+            groups[k].append(e)
+        else:
+            groups[k] = [e]
+    return sorted(groups.values(), key=len, reverse=True)
 
 
 # represents a set partition
@@ -126,14 +136,9 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
             (e,) = g.edges(v)
             partition = partition.join_two(e[0], e[1])
 
-        return partition, {v for v in g.nodes if g.degree(v) == 0
-                           or sum(partition.find(v) == partition.find(w) for w in g.neighbors(v))
-                           >= floor(g.degree(v) / 2) + 1}
-
-    # does every vertex share a part with a majority of its neighbors?
-    def locally_optimal(partition, finished):
-        return all(sum(partition.find(v) == partition.find(w) for w in g.neighbors(v))
-                   >= floor(g.degree(v) / 2) + 1 for v in g.nodes if v not in finished)
+        return partition, {v for v in g.nodes
+                           if g.degree(v) == 0
+                           or sum(partition.find(v) == partition.find(w) for w in g.neighbors(v)) > g.degree(v) / 2}
 
     # computes the LO polynomial corresponding to the union of the graphs with at least one of the identities added
     def union_lo(partition, finished, identities):
@@ -147,12 +152,31 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
 
         return out
 
-    # updates set of finished vertices before calling the cached helper function
+    # tries to infer a coarser partition and a larger set of finished vertices
+    # before calling the cached helper function
     def lo_helper(partition, finished):
-        finished = finished.union({v for v in g.nodes
-                                   if v not in finished and
-                                   sum(partition.find(v) == partition.find(w) for w in g.neighbors(v))
-                                   >= floor(g.degree(v) / 2) + 1})
+        updated = True
+        while updated:
+            updated = False
+            for v in g.nodes:
+                if v not in finished:
+                    # does v share a color with a strict majority of neighbors?
+                    if sum(partition.find(v) == partition.find(w) for w in g.neighbors(v)) > (g.degree(v) / 2):
+                        finished = finished.union({v})
+                        updated = True
+                    else:
+                        # do a weak majority of the non-same-color neighbors of v share a color?
+                        non_blue_neighbors = [w for w in g.neighbors(v) if partition.find(w) != partition.find(v)]
+                        w_groups = group_by_key(non_blue_neighbors, lambda w: partition.find(w))
+                        if len(w_groups) >= 1 and len(w_groups[0]) >= g.degree(v) / 2:
+                            partition = partition.join_two(v, w_groups[0][0])
+                            updated = True
+                            if len(w_groups[0]) > g.degree(v) / 2:
+                                finished = finished.union({v})
+                            if len(w_groups) >= 2 and len(w_groups[1]) >= g.degree(v) / 2:
+                                partition = partition.join_two(v, next(w for w in non_blue_neighbors
+                                                                       if partition.find(w) == w_groups[1][0]))
+
         return lo_helper_cached(partition, frozenset(finished))
 
     # this recursive helper function does most of the computation
@@ -161,14 +185,10 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
     @cache
     def lo_helper_cached(partition, finished):
         finished = set(finished)
-        if locally_optimal(partition, finished):
+        if len(finished) == len(g.nodes):
             return k(len(partition))
         else:
-            v = next(v for v in strategy(g)
-                     if v not in finished
-                     and sum(partition.find(v) == partition.find(w) for w in g.neighbors(v))
-                     < floor(g.degree(v) / 2) + 1)
-
+            v = next(v for v in strategy(g) if v not in finished)
             ws = list(g.neighbors(v))
             same_neighbors = {w for w in ws if partition.find(v) == partition.find(w)}
             different_neighbors = {w for w in ws if partition.find(v) != partition.find(w)}

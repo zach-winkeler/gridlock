@@ -3,6 +3,7 @@ from random import randrange
 from unittest import TestCase
 
 from networkx import Graph, grid_graph, random_unlabeled_tree, petersen_graph
+from networkx.generators.classic import complete_graph
 from numpy import array
 from scipy.special import stirling2
 
@@ -114,6 +115,11 @@ class TestLO(TestCase):
              (0, 6), (1, 7), (2, 8), (3, 9), (4, 10), (5, 11)])
 
         self.assertEqual(ff(3) + 4 * ff(2) + ff(1), lo(g))
+
+
+    def test_complete(self):
+        for n in range(1,8):
+            self.assertEqual(k(1), lo(complete_graph(n)))
 
 
 if __name__ == '__main__':

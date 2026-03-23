@@ -5,6 +5,7 @@ from recurrence import lo, k
 from recurrence_tests import from_adjacency_list
 
 
+# these tests involve some bigger graphs but take a few minutes to run on my laptop
 class TestLO(TestCase):
 
     def test_matt3(self):
@@ -23,6 +24,16 @@ class TestLO(TestCase):
 
         self.assertEqual(2 * k(4) + 8 * k(3) - 16 * k(2) + 7 * k(1), lo(g))
 
+    # def test_zach1(self):
+    #     g = from_adjacency_list(
+    #         [[1, 2, 3], [0, 3, 4, 5, 6],
+    #          [0, 3, 4, 5, 6], [0, 1, 2, 4, 5, 6],
+    #          [1, 2, 3, 5, 6], [1, 2, 3, 4, 7, 8, 9, 10],
+    #          [1, 2, 3, 4, 7, 8, 9, 10], [5, 6, 8, 9, 10],
+    #          [5, 6, 7, 9, 10], [5, 6, 7, 8],
+    #          [5, 6, 7, 8]])
+    #
+    #     self.assertEqual(2 * k(2), lo(g))
 
 if __name__ == '__main__':
     unittest.main()
