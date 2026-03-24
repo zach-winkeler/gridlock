@@ -1,4 +1,5 @@
 import itertools
+from collections import defaultdict
 from copy import copy
 from functools import cache
 from itertools import combinations
@@ -64,15 +65,35 @@ def initialize_from_set(elems):
 
 
 def group_by_key(elems, key):
-    groups = {}
+    groups = defaultdict(list)
     for e in elems:
-        k = key(e)
-        if k in groups:
-            groups[k].append(e)
-        else:
-            groups[k] = [e]
+        groups[key(e)].append(e)
     return sorted(groups.values(), key=len, reverse=True)
 
+
+def initialize_partition(g):
+    partition = initialize_from_set(list(g.nodes))
+
+    for module in find_leaf_modules(g):
+        partition = partition.join_many(module)
+
+    return partition
+
+def find_leaf_modules(g):
+    true_twins = defaultdict(list)
+    false_twins = defaultdict(list)
+
+    for v in g.nodes():
+        open_neighborhood = frozenset(g.neighbors(v))
+        false_twins[open_neighborhood].append(v)
+
+        closed_neighborhood = frozenset(list(g.neighbors(v)) + [v])
+        true_twins[closed_neighborhood].append(v)
+
+    series_modules = [vs for vs in true_twins.values() if len(vs) > 1]
+    parallel_modules = [vs for vs in false_twins.values() if len(vs) > 1]
+
+    return series_modules + parallel_modules
 
 # represents a set partition
 # elements of the set are first indexed, and then their indices are stored as parts
@@ -195,4 +216,4 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
                                 for new_same_neighbors in combinations(w_reps, j)), start=zero)
                            for j in range(1, len(w_reps) + 1)), start=zero)
 
-    return lo_helper(initialize_from_set(list(g.nodes)), set(isolates(g)))
+    return lo_helper(initialize_partition(g), set(isolates(g)))

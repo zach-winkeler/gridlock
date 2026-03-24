@@ -29,16 +29,16 @@ class TestLO(TestCase):
     def test_complete2(self):
         self.assertEqual(k(1), lo(complete_graph(8)))
 
-    # def test_zach1(self):
-    #     g = from_adjacency_list(
-    #         [[1, 2, 3], [0, 3, 4, 5, 6],
-    #          [0, 3, 4, 5, 6], [0, 1, 2, 4, 5, 6],
-    #          [1, 2, 3, 5, 6], [1, 2, 3, 4, 7, 8, 9, 10],
-    #          [1, 2, 3, 4, 7, 8, 9, 10], [5, 6, 8, 9, 10],
-    #          [5, 6, 7, 9, 10], [5, 6, 7, 8],
-    #          [5, 6, 7, 8]])
-    #
-    #     self.assertEqual(2 * k(2), lo(g))
+    def test_zach1(self):
+        g = from_adjacency_list(
+            [[1, 2, 3], [0, 3, 4, 5, 6],
+             [0, 3, 4, 5, 6], [0, 1, 2, 4, 5, 6],
+             [1, 2, 3, 5, 6], [1, 2, 3, 4, 7, 8, 9, 10],
+             [1, 2, 3, 4, 7, 8, 9, 10], [5, 6, 8, 9, 10],
+             [5, 6, 7, 9, 10], [5, 6, 7, 8],
+             [5, 6, 7, 8]])
+
+        self.assertEqual(k(1), lo(g))
 
 if __name__ == '__main__':
     unittest.main()
