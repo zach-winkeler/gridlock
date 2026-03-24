@@ -3,6 +3,8 @@ from copy import copy
 from functools import cache
 from itertools import combinations
 
+from networkx import isolates
+
 
 # represents a polynomial of one variable called "k"
 class Poly:
@@ -118,27 +120,6 @@ class Partition:
 
 
 def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
-    # constructs initial vertex partition
-    # finds leaves and bivalent vertices to save time
-    def initial_values():
-        partition = initialize_from_set(list(g.nodes))
-
-        # bivalent vertices share the same color as their neighbors
-        bivalent_vertices = [v for v in g.nodes if g.degree(v) == 2]
-        for v in bivalent_vertices:
-            e1, e2 = g.edges(v)
-            partition = partition.join_two(e1[0], e1[1])
-            partition = partition.join_two(e2[0], e2[1])
-
-        # leaves share the same color as their neighbor
-        leaves = [v for v in g.nodes if g.degree(v) == 1]
-        for v in leaves:
-            (e,) = g.edges(v)
-            partition = partition.join_two(e[0], e[1])
-
-        return partition, {v for v in g.nodes
-                           if g.degree(v) == 0
-                           or sum(partition.find(v) == partition.find(w) for w in g.neighbors(v)) > g.degree(v) / 2}
 
     # computes the LO polynomial corresponding to the union of the graphs with at least one of the identities added
     def union_lo(partition, finished, identities):
@@ -174,8 +155,7 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
                             if len(w_groups[0]) > g.degree(v) / 2:
                                 finished = finished.union({v})
                             if len(w_groups) >= 2 and len(w_groups[1]) >= g.degree(v) / 2:
-                                partition = partition.join_two(v, next(w for w in non_blue_neighbors
-                                                                       if partition.find(w) == w_groups[1][0]))
+                                partition = partition.join_two(v, w_groups[1][0])
 
         return lo_helper_cached(partition, frozenset(finished))
 
@@ -215,4 +195,4 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
                                 for new_same_neighbors in combinations(w_reps, j)), start=zero)
                            for j in range(1, len(w_reps) + 1)), start=zero)
 
-    return lo_helper(*initial_values())
+    return lo_helper(initialize_from_set(list(g.nodes)), set(isolates(g)))
