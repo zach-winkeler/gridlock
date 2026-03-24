@@ -189,28 +189,30 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
             return k(len(partition))
         else:
             v = next(v for v in strategy(g) if v not in finished)
-            ws = list(g.neighbors(v))
-            same_neighbors = {w for w in ws if partition.find(v) == partition.find(w)}
-            different_neighbors = {w for w in ws if partition.find(v) != partition.find(w)}
-            if len(same_neighbors) == 0:  # at least two neighbors should share a color with v
+            neighbors = list(g.neighbors(v))
+            bs = {b for b in neighbors if partition.find(v) == partition.find(b)}
+            ws = {w for w in neighbors if partition.find(v) != partition.find(w)}
+            w_groups = group_by_key(ws, lambda w: partition.find(w))
+            w_reps = [group[0] for group in w_groups]
+            if len(bs) == 0:  # at least two neighbors should share a color with v
                 return sum(((1 if j % 2 == 0 else -1) * (j - 1) *
                             sum((lo_helper(partition.join_many((v,) + new_same_neighbors), finished)
-                                 for new_same_neighbors in combinations(different_neighbors, j)), start=zero)
-                            for j in range(2, len(different_neighbors) + 1)), start=zero)
-            elif len(same_neighbors) == 1:  # at least one more neighbor should share a color with v
+                                 for new_same_neighbors in combinations(ws, j)), start=zero)
+                            for j in range(2, len(ws) + 1)), start=zero)
+            elif len(bs) == 1:  # at least one more neighbor should share a color with v
                 return sum((-(1 if j % 2 == 0 else -1) *
                             sum((lo_helper(partition.join_many((v,) + new_same_neighbors), finished)
-                                 for new_same_neighbors in combinations(different_neighbors, j)), start=zero)
-                            for j in range(1, len(different_neighbors) + 1)), start=zero)
+                                 for new_same_neighbors in combinations(w_reps, j)), start=zero)
+                            for j in range(1, len(w_reps) + 1)), start=zero)
             else:  # we can't assume any more neighbors share a color with v
                 return lo_helper(partition, finished.union({v})) \
                     - union_lo(partition,
                                finished.union({v}),
-                               set(combinations(different_neighbors, len(same_neighbors))).union(
-                                   {(v, w) for w in different_neighbors})) \
+                               set(combinations(ws, len(bs))).union(
+                                   {(v, w) for w in w_reps})) \
                     + sum((-(1 if j % 2 == 0 else -1) *
                            sum((lo_helper(partition.join_many((v,) + new_same_neighbors), finished)
-                                for new_same_neighbors in combinations(different_neighbors, j)), start=zero)
-                           for j in range(1, len(different_neighbors) + 1)), start=zero)
+                                for new_same_neighbors in combinations(w_reps, j)), start=zero)
+                           for j in range(1, len(w_reps) + 1)), start=zero)
 
     return lo_helper(*initial_values())

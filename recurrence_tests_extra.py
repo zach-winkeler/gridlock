@@ -1,6 +1,8 @@
 import unittest
 from unittest import TestCase
 
+from networkx import complete_graph
+
 from recurrence import lo, k
 from recurrence_tests import from_adjacency_list
 
@@ -23,6 +25,9 @@ class TestLO(TestCase):
              [8, 9, 10, 13, 15], [13, 14, 15, 6, 7], [12, 14, 15, 10, 11], [12, 13, 15, 6, 7], [12, 13, 14, 10, 11]])
 
         self.assertEqual(2 * k(4) + 8 * k(3) - 16 * k(2) + 7 * k(1), lo(g))
+
+    def test_complete2(self):
+        self.assertEqual(k(1), lo(complete_graph(8)))
 
     # def test_zach1(self):
     #     g = from_adjacency_list(
