@@ -140,20 +140,20 @@ class Partition:
         return all(p == other.parts[i] for i, p in enumerate(self.parts))
 
 
+
+# computes the LO polynomial corresponding to the union of the graphs with at least one of the identities added
+def union_poly(partition, finished, identities, poly_fun):
+    out = zero
+    for i in range(1, len(identities) + 1):
+        for choices in combinations(identities, i):
+            new_partition = partition
+            for choice in choices:
+                new_partition = new_partition.join_many(choice)
+            out += (1 if i % 2 == 1 else -1) * poly_fun(new_partition, finished)
+
+    return out
+
 def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
-
-    # computes the LO polynomial corresponding to the union of the graphs with at least one of the identities added
-    def union_lo(partition, finished, identities):
-        out = zero
-        for i in range(1, len(identities) + 1):
-            for choices in combinations(identities, i):
-                new_partition = partition.copy()
-                for choice in choices:
-                    new_partition = new_partition.join_many(choice)
-                out += (1 if i % 2 == 1 else -1) * lo_helper(new_partition, finished)
-
-        return out
-
     # tries to infer a coarser partition and a larger set of finished vertices
     # before calling the cached helper function
     def lo_helper(partition, finished):
@@ -201,19 +201,13 @@ def lo(g, strategy=lambda g: sorted(g.nodes, key=g.degree, reverse=True)):
                                  for new_same_neighbors in combinations(ws, j)), start=zero)
                             for j in range(2, len(ws) + 1)), start=zero)
             elif len(bs) == 1:  # at least one more neighbor should share a color with v
-                return sum((-(1 if j % 2 == 0 else -1) *
-                            sum((lo_helper(partition.join_many((v,) + new_same_neighbors), finished)
-                                 for new_same_neighbors in combinations(w_reps, j)), start=zero)
-                            for j in range(1, len(w_reps) + 1)), start=zero)
+                return union_poly(partition, finished, {(v, w) for w in w_reps}, lo_helper)
             else:  # we can't assume any more neighbors share a color with v
                 return lo_helper(partition, finished.union({v})) \
-                    - union_lo(partition,
-                               finished.union({v}),
-                               set(combinations(ws, len(bs))).union(
-                                   {(v, w) for w in w_reps})) \
-                    + sum((-(1 if j % 2 == 0 else -1) *
-                           sum((lo_helper(partition.join_many((v,) + new_same_neighbors), finished)
-                                for new_same_neighbors in combinations(w_reps, j)), start=zero)
-                           for j in range(1, len(w_reps) + 1)), start=zero)
+                    - union_poly(partition, finished.union({v}),
+                                 set(combinations(ws, len(bs))).union(
+                                   {(v, w) for w in w_reps}),
+                                 lo_helper) \
+                    + union_poly(partition, finished, {(v, w) for w in w_reps}, lo_helper)
 
     return lo_helper(initialize_partition(g), set(isolates(g)))

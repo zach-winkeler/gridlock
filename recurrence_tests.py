@@ -2,7 +2,7 @@ import unittest
 from random import randrange
 from unittest import TestCase
 
-from networkx import Graph, grid_graph, random_unlabeled_tree, petersen_graph
+from networkx import Graph, grid_graph, random_unlabeled_tree, petersen_graph, karate_club_graph
 from networkx.generators.classic import complete_graph
 from numpy import array
 from scipy.special import stirling2
@@ -120,6 +120,10 @@ class TestLO(TestCase):
     def test_complete(self):
         for n in range(1,8):
             self.assertEqual(k(1), lo(complete_graph(n)))
+
+
+    def test_karate_club(self):
+        self.assertEqual(k(2), lo(karate_club_graph()))
 
 
 if __name__ == '__main__':
