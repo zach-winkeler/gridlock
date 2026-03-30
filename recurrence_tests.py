@@ -107,6 +107,14 @@ class TestLO(TestCase):
 
         self.assertEqual(k(1), lo(g))
 
+    def test_matt4(self):
+        g = from_adjacency_list(
+            [[1, 2, 3, 4, 5], [0, 2, 3, 8, 9], [0, 1, 3, 4, 5], [0, 1, 2, 8, 9], [5, 6, 7, 0, 2], [4, 6, 7, 0, 2],
+             [4, 5, 7, 12, 14], [4, 5, 6, 12, 14], [9, 10, 11, 1, 3], [8, 10, 11, 1, 3], [8, 9, 11, 13, 15],
+             [8, 9, 10, 13, 15], [13, 14, 15, 6, 7], [12, 14, 15, 10, 11], [12, 13, 15, 6, 7], [12, 13, 14, 10, 11]])
+
+        self.assertEqual(2 * k(4) + 8 * k(3) - 16 * k(2) + 7 * k(1), lo(g))
+
     # ladder-shaped graph, non-alternating LO-polynomial
     def test_nonalternating(self):
         g = Graph(
@@ -117,7 +125,7 @@ class TestLO(TestCase):
         self.assertEqual(ff(3) + 4 * ff(2) + ff(1), lo(g))
 
     def test_complete(self):
-        for n in range(1, 8):
+        for n in range(1, 9):
             self.assertEqual(k(1), lo(complete_graph(n)))
 
     def test_karate_club(self):
@@ -153,6 +161,17 @@ class TestLO(TestCase):
         ])
 
         self.assertEqual(k(5) - 5 * k(4) + 10 * k(3) - 10 * k(2) + 5 * k(1), lo(g))
+
+    def test_zach1(self):
+        g = from_adjacency_list(
+            [[1, 2, 3], [0, 3, 4, 5, 6],
+             [0, 3, 4, 5, 6], [0, 1, 2, 4, 5, 6],
+             [1, 2, 3, 5, 6], [1, 2, 3, 4, 7, 8, 9, 10],
+             [1, 2, 3, 4, 7, 8, 9, 10], [5, 6, 8, 9, 10],
+             [5, 6, 7, 9, 10], [5, 6, 7, 8],
+             [5, 6, 7, 8]])
+
+        self.assertEqual(k(1), lo(g))
 
 
 if __name__ == '__main__':
